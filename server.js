@@ -418,16 +418,50 @@ app.delete('/api/pending-users/:id', async (req, res) => {
 // Add log
 app.post('/api/logs', async (req, res) => {
   try {
-    const { userEmail, userName, type, timestamp, image, location, created_at } = req.body;
+    const { userEmail, userName, type, timestamp, image, location, created_at, todo, progress } = req.body;
     await db.execute(
-      'INSERT INTO logs (userEmail, userName, type, timestamp, image, location, created_at) VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, UTC_TIMESTAMP()))',
-      [userEmail, userName, type, timestamp, image, location, created_at || null]
+      'INSERT INTO logs (userEmail, userName, type, timestamp, image, location, todo, progress, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, UTC_TIMESTAMP()))',
+      [userEmail, userName, type, timestamp, image, location, todo || null, progress || null, created_at || null]
     );
     broadcastDataChange();
     res.json({ success: true });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to add log' });
+  }
+});
+
+// Update a log entry (for todo/progress)
+app.patch('/api/logs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { todo, progress } = req.body;
+
+    // Build the update query dynamically
+    const fieldsToUpdate = [];
+    const values = [];
+
+    if (todo !== undefined) {
+      fieldsToUpdate.push('todo = ?');
+      values.push(todo);
+    }
+    if (progress !== undefined) {
+      fieldsToUpdate.push('progress = ?');
+      values.push(progress);
+    }
+
+    if (fieldsToUpdate.length === 0) {
+      return res.status(400).json({ error: 'No fields to update provided.' });
+    }
+
+    values.push(id); // for the WHERE clause
+    const sql = `UPDATE logs SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
+    await db.execute(sql, values);
+    broadcastDataChange();
+    res.json({ success: true, message: 'Log updated successfully.' });
+  } catch (error) {
+    console.error('Failed to update log:', error);
+    res.status(500).json({ error: 'Failed to update log.' });
   }
 });
 

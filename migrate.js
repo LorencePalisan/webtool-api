@@ -82,6 +82,22 @@ async function createTables(connection) {
     )
   `);
 
+  // Add todo and progress columns to logs table if they don't exist
+  const [logColumns] = await connection.execute(`SHOW COLUMNS FROM logs`);
+  const logColumnNames = logColumns.map(c => c.Field);
+
+  if (!logColumnNames.includes('todo')) {
+    console.log("Adding 'todo' column to 'logs' table...");
+    await connection.execute(`
+      ALTER TABLE logs ADD COLUMN todo TEXT DEFAULT NULL AFTER location
+    `);
+  }
+
+  if (!logColumnNames.includes('progress')) {
+    console.log("Adding 'progress' column to 'logs' table...");
+    await connection.execute(`ALTER TABLE logs ADD COLUMN progress TEXT DEFAULT NULL AFTER todo`);
+  }
+
   await connection.execute(`
     CREATE TABLE IF NOT EXISTS holiday_requests (
       id VARCHAR(36) PRIMARY KEY,
