@@ -168,6 +168,16 @@ async function createTables(connection) {
     )
   `);
 
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS custom_holidays (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      date DATE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_holiday (name, date)
+    )
+  `);
+
   console.log('Tables are ready.');
 }
 

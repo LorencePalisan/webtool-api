@@ -268,6 +268,39 @@ app.get('/api/password-reset-requests', async (req, res) => {
   }
 });
 
+// Get all custom holidays
+app.get('/api/custom-holidays', async (req, res) => {
+  try {
+    // It's good practice to order holidays by date
+    const [customHolidays] = await db.execute('SELECT * FROM custom_holidays ORDER BY date ASC');
+    res.json(customHolidays);
+  } catch (error) {
+    console.error('Failed to fetch custom holidays:', error);
+    res.status(500).json({ error: 'Failed to fetch custom holidays' });
+  }
+});
+
+// Add a custom holiday
+app.post('/api/custom-holidays', authenticateUser, async (req, res) => {
+  try {
+    // Ensure only admins can perform this action
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Only admins can add custom holidays.' });
+    }
+    const { name, date } = req.body;
+    if (!name || !date) {
+      return res.status(400).json({ error: 'Holiday name and date are required.' });
+    }
+
+    await db.execute('INSERT INTO custom_holidays (name, date) VALUES (?, ?)', [name, date]);
+    broadcastDataChange(); // Notify clients of the data change
+    res.status(201).json({ success: true, message: 'Custom holiday added successfully.' });
+  } catch (error) {
+    console.error('Failed to add custom holiday:', error);
+    res.status(500).json({ error: 'Failed to add custom holiday' });
+  }
+});
+
 // Add user
 app.post('/api/users', async (req, res) => {
   try {
