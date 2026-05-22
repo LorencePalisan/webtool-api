@@ -301,6 +301,50 @@ app.post('/api/custom-holidays', authenticateUser, async (req, res) => {
   }
 });
 
+// Update a custom holiday
+app.put('/api/custom-holidays/:id', authenticateUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Only admins can update custom holidays.' });
+    }
+    const { id } = req.params;
+    const { name, date } = req.body;
+    if (!name || !date) {
+      return res.status(400).json({ error: 'Holiday name and date are required.' });
+    }
+
+    const [result] = await db.execute('UPDATE custom_holidays SET name = ?, date = ? WHERE id = ?', [name, date, id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Custom holiday not found.' });
+    }
+    broadcastDataChange();
+    res.json({ success: true, message: 'Custom holiday updated successfully.' });
+  } catch (error) {
+    console.error('Failed to update custom holiday:', error);
+    res.status(500).json({ error: 'Failed to update custom holiday' });
+  }
+});
+
+// Delete a custom holiday
+app.delete('/api/custom-holidays/:id', authenticateUser, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Only admins can delete custom holidays.' });
+    }
+    const { id } = req.params;
+
+    const [result] = await db.execute('DELETE FROM custom_holidays WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Custom holiday not found.' });
+    }
+    broadcastDataChange();
+    res.json({ success: true, message: 'Custom holiday deleted successfully.' });
+  } catch (error) {
+    console.error('Failed to delete custom holiday:', error);
+    res.status(500).json({ error: 'Failed to delete custom holiday' });
+  }
+});
+
 // Add user
 app.post('/api/users', async (req, res) => {
   try {
