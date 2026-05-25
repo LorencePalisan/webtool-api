@@ -1,0 +1,29 @@
+name = "nexus-portal-backend"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nexus-portal-db"
+database_id = "YOUR_DATABASE_ID_HERE"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "nexus-portal-images"
+
+[durable_objects]
+bindings = [
+  { name = "BROADCAST", class_name = "BroadcastDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["BroadcastDO"]
+
+# Secrets — set via: wrangler secret put <NAME>
+#   wrangler secret put JWT_SECRET
+#   wrangler secret put CORS_ALLOWED_ORIGINS
+#
+# Non-secret vars can go here under [vars]:
+# [vars]
+# R2_PUBLIC_URL = "https://pub-xxxx.r2.dev"

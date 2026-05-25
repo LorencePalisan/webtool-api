@@ -4,3 +4,6 @@ data.json
 
 # Dependencies
 /node_modules
+
+# Cloudflare Wrangler
+.wrangler/
